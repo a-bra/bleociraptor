@@ -17,6 +17,7 @@ pub mod frame;
 pub mod logring;
 pub mod parse;
 pub mod registry;
+pub mod render;
 pub mod spark;
 pub mod wedge;
 

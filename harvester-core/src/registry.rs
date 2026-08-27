@@ -39,6 +39,10 @@ pub struct DeviceView<'a> {
     pub rssi_dbm: Option<i8>,
     pub online: bool,
     pub last_seen: Option<Millis>,
+    /// Last successful sighting, NEVER cleared by expiry — the dashboard's
+    /// "OFFLINE 6m" age (§18). Deliberately separate from `last_seen`, which
+    /// feeds the gapping timestamp metric and must vanish with the device.
+    pub last_sighting: Option<Millis>,
     pub counters: DeviceCounters,
     pub beacons_per_minute: u16,
 }
@@ -48,6 +52,7 @@ struct DeviceState {
     readings: Readings,
     rssi_dbm: Option<i8>,
     last_seen: Option<Millis>,
+    last_sighting: Option<Millis>,
     online: bool,
     counters: DeviceCounters,
     buckets: [u8; BPM_BUCKETS],
@@ -65,6 +70,7 @@ impl DeviceState {
             },
             rssi_dbm: None,
             last_seen: None,
+            last_sighting: None,
             online: false,
             counters: DeviceCounters {
                 ok: 0,
@@ -195,6 +201,7 @@ impl Registry {
                 merged.voltage_milli = fresh.voltage_milli.or(merged.voltage_milli);
                 state.rssi_dbm = Some(rssi_dbm);
                 state.last_seen = Some(now);
+                state.last_sighting = Some(now);
                 state.online = true;
                 if let Some(id) = parsed.unknown_object {
                     self.parse_unknown_object = self.parse_unknown_object.saturating_add(1);
@@ -262,6 +269,7 @@ impl Registry {
             rssi_dbm: state.rssi_dbm,
             online: state.online,
             last_seen: state.last_seen,
+            last_sighting: state.last_sighting,
             counters: state.counters,
             beacons_per_minute: state.beacons_per_minute(),
         })
