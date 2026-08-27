@@ -12,6 +12,7 @@
 
 pub mod clock;
 pub mod device;
+pub mod fixed;
 pub mod frame;
 
 pub use clock::{Clock, Millis};
