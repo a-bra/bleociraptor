@@ -10,12 +10,28 @@
     clippy::arithmetic_side_effects
 )]
 
+pub mod clock;
+pub mod device;
+
+pub use clock::{Clock, Millis};
+pub use device::Device;
+
 /// Capacity constants (§5.1). Core is allocation-free, so it owns the sizes of
 /// its fixed arrays. Behavioural tunables are injected via `Tunables` instead.
 pub const MAX_DEVICES: usize = 8;
 pub const SPARK_DEPTH: usize = 72;
 pub const LOG_LINES: usize = 128;
 pub const LOG_LINE_BYTES: usize = 96;
+
+/// Behavioural tunables, injected from `harvester/src/config.rs` at
+/// construction so their tuning history lives in git (§5.2). Core never
+/// reaches back into firmware config.
+#[derive(Debug, Clone, Copy)]
+pub struct Tunables {
+    pub device_timeout: Millis,
+    pub wedge_window: Millis,
+    pub spark_sample_interval: Millis,
+}
 
 #[cfg(test)]
 mod tests {
