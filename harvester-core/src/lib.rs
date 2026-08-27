@@ -14,6 +14,7 @@ pub mod clock;
 pub mod device;
 pub mod fixed;
 pub mod frame;
+pub mod parse;
 pub mod spark;
 pub mod wedge;
 
