@@ -1,0 +1,16 @@
+# Secrets — never committed, in any form. See SPEC.md §5.3, §20.7.
+harvester/src/devices.rs
+
+# Build output
+target/
+harvester/target/
+harvester/.embuild/
+
+# ESP-IDF local state
+harvester/sdkconfig.old
+harvester/dependencies.lock
+
+# Editors
+.vscode/
+.idea/
+*.swp
