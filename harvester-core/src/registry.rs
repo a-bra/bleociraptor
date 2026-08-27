@@ -176,6 +176,14 @@ impl Registry {
             return false;
         };
         state.bump_bucket();
+        // The wedge watermark advances on EVERY outcome: §15.1's "silent" means
+        // no frames arriving at all. A decrypt- or parse-failing beacon is not
+        // a sighting, but it proves the radio path delivers end-to-end, and a
+        // wedge reboot would not fix a wrong bindkey.
+        self.newest_seen = Some(match self.newest_seen {
+            Some(watermark) if watermark > now => watermark,
+            _ => now,
+        });
         match outcome {
             Ok(parsed) => {
                 state.counters.ok = state.counters.ok.saturating_add(1);
@@ -188,10 +196,6 @@ impl Registry {
                 state.rssi_dbm = Some(rssi_dbm);
                 state.last_seen = Some(now);
                 state.online = true;
-                self.newest_seen = Some(match self.newest_seen {
-                    Some(watermark) if watermark > now => watermark,
-                    _ => now,
-                });
                 if let Some(id) = parsed.unknown_object {
                     self.parse_unknown_object = self.parse_unknown_object.saturating_add(1);
                     // idx < devices.len() <= MAX_DEVICES, so it fits in u8.
@@ -230,10 +234,12 @@ impl Registry {
         }
     }
 
-    /// Most recent successful-sighting instant across configured devices, for
-    /// the wedge detector. An internal watermark, deliberately separate from
-    /// the per-device `last_seen`: expiry clears the rendered value without
-    /// blinding the detector.
+    /// Most recent instant ANY beacon from a configured device arrived,
+    /// regardless of outcome — the wedge detector's input (§15.1: "silent"
+    /// means nothing arriving, and failed frames still prove radio delivery).
+    /// An internal watermark, deliberately separate from the per-device
+    /// `last_seen`: expiry clears the rendered value without blinding the
+    /// detector, and failures feed this without counting as sightings.
     pub fn newest_last_seen(&self) -> Option<Millis> {
         self.newest_seen
     }
@@ -433,8 +439,10 @@ mod tests {
         assert_eq!(v.counters.parse_fail, 1);
         // Every outcome counts toward reception (§18)...
         assert_eq!(v.beacons_per_minute, 2);
-        // ...but a failed frame never feeds the wedge watermark.
-        assert_eq!(r.newest_last_seen(), None);
+        // ...and feeds the wedge watermark: §15.1's "silent" means nothing
+        // arriving at all, and a failed frame still proves radio delivery —
+        // a wedge reboot would not fix a wrong bindkey.
+        assert_eq!(r.newest_last_seen(), Some(Millis(2_000)));
         assert_eq!(r.devices_active(), 0);
     }
 
