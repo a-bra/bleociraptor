@@ -14,10 +14,12 @@ pub mod clock;
 pub mod device;
 pub mod fixed;
 pub mod frame;
+pub mod spark;
 pub mod wedge;
 
 pub use clock::{Clock, Millis};
 pub use device::Device;
+pub use spark::{Spark, NO_SAMPLE};
 pub use wedge::{WedgeDetector, WedgeVerdict};
 
 /// Capacity constants (§5.1). Core is allocation-free, so it owns the sizes of
