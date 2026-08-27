@@ -1,0 +1,9 @@
+# ABOUTME: Root workspace — HOST crates only. `cargo test` here must pass with
+# ABOUTME: no ESP toolchain and no hardware (SPEC.md §6.1, acceptance crit. 1).
+
+[workspace]
+resolver = "2"
+members = ["harvester-core"]
+# harvester/ is deliberately NOT a member: it is its own workspace with its own
+# .cargo/config.toml, so its ESP target never hijacks host test builds (§6.1).
+exclude = ["harvester"]

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# ABOUTME: Pre-commit gate — format, lints, host tests, and a secret tripwire.
+# ABOUTME: Never bypass (CLAUDE.md). Enable with: git config core.hooksPath .githooks
+
+set -euo pipefail
+
+fail() { echo "pre-commit: $1" >&2; exit 1; }
+
+# --- Secret tripwire (SPEC.md §20.7) --------------------------------------
+# The gitignore should make this unreachable; this is the backstop.
+if git diff --cached --name-only | grep -qx 'harvester/src/devices.rs'; then
+    fail "harvester/src/devices.rs is staged. That file holds secrets and is never committed."
+fi
+# LYWSD03MMC sensors share the Xiaomi OUI A4:C1:38. Fixtures use AA:BB:CC:*
+# synthetic MACs, so this byte pattern appearing anywhere means a real address.
+# (This file names the OUI and must exempt itself, or it trips on its own comment.)
+if git diff --cached -U0 -- ':(exclude).githooks/pre-commit' | grep -iE '^\+.*a4[:_-]?c1[:_-]?38'; then
+    fail "staged content matches the Xiaomi OUI A4:C1:38 — that looks like a real sensor MAC."
+fi
+
+# --- Quality gates ---------------------------------------------------------
+echo "pre-commit: cargo fmt --check"
+cargo fmt --all --check || fail "formatting. Run: cargo fmt --all"
+
+echo "pre-commit: cargo clippy"
+cargo clippy --workspace --all-targets -- -D warnings || fail "clippy"
+
+echo "pre-commit: cargo test"
+cargo test --workspace --quiet || fail "tests"
+
+echo "pre-commit: ok"

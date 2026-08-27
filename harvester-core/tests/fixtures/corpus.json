@@ -1,0 +1,399 @@
+{
+  "captured_utc": "2026-08-27T10:44:51+00:00",
+  "note": "Real frames, synthetic identities. See SPEC.md 17.2.",
+  "frames": [
+    {
+      "device": "baby_room",
+      "mac": "AA:BB:CC:00:00:00",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "4000290130023d0903e70e",
+      "shape": "info=40 [00 01 02 03]",
+      "expected": {
+        "battery": 48,
+        "temperature": 23.65,
+        "humidity": 38.15
+      }
+    },
+    {
+      "device": "baby_room",
+      "mac": "AA:BB:CC:00:00:00",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "40002a0c1b0a10001101",
+      "shape": "info=40 [00 0C 10 11]",
+      "expected": {
+        "voltage": 2.587
+      }
+    },
+    {
+      "device": "baby_room",
+      "mac": "AA:BB:CC:00:00:00",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "40002b0c1b0a10001101",
+      "shape": "info=40 [00 0C 10 11]",
+      "expected": {
+        "voltage": 2.587
+      }
+    },
+    {
+      "device": "baby_room",
+      "mac": "AA:BB:CC:00:00:00",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "40002c0130024109030b0f",
+      "shape": "info=40 [00 01 02 03]",
+      "expected": {
+        "battery": 48,
+        "temperature": 23.69,
+        "humidity": 38.51
+      }
+    },
+    {
+      "device": "baby_room",
+      "mac": "AA:BB:CC:00:00:00",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "40002e0c1b0a10001101",
+      "shape": "info=40 [00 0C 10 11]",
+      "expected": {
+        "voltage": 2.587
+      }
+    },
+    {
+      "device": "baby_room",
+      "mac": "AA:BB:CC:00:00:00",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "40003e0c1a0a10001101",
+      "shape": "info=40 [00 0C 10 11]",
+      "expected": {
+        "voltage": 2.586
+      }
+    },
+    {
+      "device": "humidor",
+      "mac": "AA:BB:CC:00:00:01",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "40004f016402660a03de17",
+      "shape": "info=40 [00 01 02 03]",
+      "expected": {
+        "battery": 100,
+        "temperature": 26.62,
+        "humidity": 61.1
+      }
+    },
+    {
+      "device": "humidor",
+      "mac": "AA:BB:CC:00:00:01",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "400050016402640a03de17",
+      "shape": "info=40 [00 01 02 03]",
+      "expected": {
+        "battery": 100,
+        "temperature": 26.6,
+        "humidity": 61.1
+      }
+    },
+    {
+      "device": "humidor",
+      "mac": "AA:BB:CC:00:00:01",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "4000500c670c10001101",
+      "shape": "info=40 [00 0C 10 11]",
+      "expected": {
+        "voltage": 3.175
+      }
+    },
+    {
+      "device": "humidor",
+      "mac": "AA:BB:CC:00:00:01",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "400051016402640a03e117",
+      "shape": "info=40 [00 01 02 03]",
+      "expected": {
+        "battery": 100,
+        "temperature": 26.6,
+        "humidity": 61.13
+      }
+    },
+    {
+      "device": "humidor",
+      "mac": "AA:BB:CC:00:00:01",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "4000510c670c10001101",
+      "shape": "info=40 [00 0C 10 11]",
+      "expected": {
+        "voltage": 3.175
+      }
+    },
+    {
+      "device": "humidor",
+      "mac": "AA:BB:CC:00:00:01",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "400052016402660a03e217",
+      "shape": "info=40 [00 01 02 03]",
+      "expected": {
+        "battery": 100,
+        "temperature": 26.62,
+        "humidity": 61.14
+      }
+    },
+    {
+      "device": "humidor",
+      "mac": "AA:BB:CC:00:00:01",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "4000530c660c10001101",
+      "shape": "info=40 [00 0C 10 11]",
+      "expected": {
+        "voltage": 3.174
+      }
+    },
+    {
+      "device": "humidor",
+      "mac": "AA:BB:CC:00:00:01",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "4000540164025f0a03e817",
+      "shape": "info=40 [00 01 02 03]",
+      "expected": {
+        "battery": 100,
+        "temperature": 26.55,
+        "humidity": 61.2
+      }
+    },
+    {
+      "device": "humidor",
+      "mac": "AA:BB:CC:00:00:01",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "4000540c660c10001101",
+      "shape": "info=40 [00 0C 10 11]",
+      "expected": {
+        "voltage": 3.174
+      }
+    },
+    {
+      "device": "humidor",
+      "mac": "AA:BB:CC:00:00:01",
+      "bindkey": null,
+      "encrypted": false,
+      "frame_hex": "40008b0164022f0a033718",
+      "shape": "info=40 [00 01 02 03]",
+      "expected": {
+        "battery": 100,
+        "temperature": 26.07,
+        "humidity": 61.99
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "41df9b1b85a19e3d7cea100069eefb40",
+      "shape": "info=40 [0C 10 11]",
+      "expected": {
+        "voltage": 2.962
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "41cb12b8521c77e7d6b9ea1000b5d5ab7d",
+      "shape": "info=40 [01 02 03]",
+      "expected": {
+        "battery": 95,
+        "temperature": 27.83,
+        "humidity": 38.93
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "41a8a15931066ff980ea1000460fc387",
+      "shape": "info=40 [0C 10 11]",
+      "expected": {
+        "voltage": 2.962
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "41533cc959f91b917fea1000ff397c71",
+      "shape": "info=40 [0C 10 11]",
+      "expected": {
+        "voltage": 2.962
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "415ef1c067f209996c7fea1000e83588a8",
+      "shape": "info=40 [01 02 03]",
+      "expected": {
+        "battery": 95,
+        "temperature": 28.62,
+        "humidity": 41.05
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "416ef9058b5c263685ea100076b89e04",
+      "shape": "info=40 [0C 10 11]",
+      "expected": {
+        "voltage": 2.962
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "4125667e0b173121aeea100024e42685",
+      "shape": "info=40 [0C 10 11]",
+      "expected": {
+        "voltage": 2.963
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "41eae32222a3661a2c86ea10003f4fc6db",
+      "shape": "info=40 [01 02 03]",
+      "expected": {
+        "battery": 95,
+        "temperature": 28.56,
+        "humidity": 40.4
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "418987e3718e421883ea1000887ca569",
+      "shape": "info=40 [0C 10 11]",
+      "expected": {
+        "voltage": 2.962
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "4197decf1eb0a3ba98ea1000afdd285b",
+      "shape": "info=40 [11] UNKNOWN=0x3E",
+      "expected": {}
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "41844aea4a8550fd7483ea10002433c077",
+      "shape": "info=40 [01 02 03]",
+      "expected": {
+        "battery": 95,
+        "temperature": 28.59,
+        "humidity": 40.68
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "41a112da812f932a06b8ea100025db0099",
+      "shape": "info=40 [01 02 03]",
+      "expected": {
+        "battery": 95,
+        "temperature": 27.82,
+        "humidity": 38.99
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "415915789c8b592d81ea1000a13d555a",
+      "shape": "info=40 [0C 10 11]",
+      "expected": {
+        "voltage": 2.962
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "411eae60d59ea3352387ea100094e63424",
+      "shape": "info=40 [01 02 03]",
+      "expected": {
+        "battery": 95,
+        "temperature": 28.57,
+        "humidity": 40.4
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "4154d871a1804bd13981ea10000395e34c",
+      "shape": "info=40 [01 02 03]",
+      "expected": {
+        "battery": 95,
+        "temperature": 28.61,
+        "humidity": 40.93
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "4132ae1fddd8e54b3e89ea1000e87c95ff",
+      "shape": "info=40 [01 02 03]",
+      "expected": {
+        "battery": 95,
+        "temperature": 28.55,
+        "humidity": 40.45
+      }
+    },
+    {
+      "device": "living_room",
+      "mac": "AA:BB:CC:00:00:02",
+      "bindkey": "02020202020202020202020202020202",
+      "encrypted": true,
+      "frame_hex": "41c0873d2e47393b84ea100005e47236",
+      "shape": "info=40 [0C 10 11]",
+      "expected": {
+        "voltage": 2.962
+      }
+    }
+  ]
+}

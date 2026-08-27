@@ -1,0 +1,22 @@
+// ABOUTME: Template for harvester/src/devices.rs — the gitignored secrets file.
+// ABOUTME: Copy to devices.rs and fill in. Never commit the copy (SPEC.md §5.3).
+
+use harvester_core::{bindkey, mac, Device};
+
+pub const WIFI_SSID: &str = "your-ssid";
+pub const WIFI_PSK: &str = "your-psk";
+pub const OTA_TOKEN: &str = "choose-a-long-random-token";
+
+// A malformed MAC or a bindkey that is not exactly 32 hex chars is a BUILD
+// ERROR, not a sensor that silently never reports (§5.3).
+pub const DEVICES: &[Device] = &[
+    Device::plain(mac!("AA:BB:CC:00:00:01"), "baby_room"),
+    Device::plain(mac!("AA:BB:CC:00:00:02"), "humidor"),
+    Device::encrypted(
+        mac!("AA:BB:CC:00:00:03"),
+        "living_room",
+        bindkey!("00112233445566778899aabbccddeeff"),
+    ),
+];
+
+const _: () = assert!(DEVICES.len() <= harvester_core::MAX_DEVICES);
