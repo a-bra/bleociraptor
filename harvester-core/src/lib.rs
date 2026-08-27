@@ -14,9 +14,11 @@ pub mod clock;
 pub mod device;
 pub mod fixed;
 pub mod frame;
+pub mod wedge;
 
 pub use clock::{Clock, Millis};
 pub use device::Device;
+pub use wedge::{WedgeDetector, WedgeVerdict};
 
 /// Capacity constants (§5.1). Core is allocation-free, so it owns the sizes of
 /// its fixed arrays. Behavioural tunables are injected via `Tunables` instead.
