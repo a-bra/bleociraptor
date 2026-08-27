@@ -16,11 +16,13 @@ pub mod fixed;
 pub mod frame;
 pub mod logring;
 pub mod parse;
+pub mod registry;
 pub mod spark;
 pub mod wedge;
 
 pub use clock::{Clock, Millis};
 pub use device::Device;
+pub use registry::Registry;
 pub use spark::{Spark, NO_SAMPLE};
 pub use wedge::{WedgeDetector, WedgeVerdict};
 
