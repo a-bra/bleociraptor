@@ -1,7 +1,10 @@
 // ABOUTME: Render layer — produces bytes, never serves them (§6.1). Submodules
 // ABOUTME: own one endpoint's body each; http.rs in the firmware owns sockets.
 
+pub mod history;
 pub mod prometheus;
+pub mod readings;
+pub mod status;
 
 /// Harvester-level health snapshot, filled in by the firmware and passed to
 /// the renderers. Core never probes hardware; these arrive as plain values.
