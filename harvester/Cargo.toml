@@ -1,0 +1,36 @@
+# ABOUTME: Firmware crate — its own workspace, deliberately excluded from the
+# ABOUTME: repo root so the ESP target never hijacks host test builds (§6.1).
+
+[package]
+name = "harvester"
+version = "0.1.0"
+edition = "2021"
+publish = false
+rust-version = "1.77"
+
+[[bin]]
+name = "harvester"
+harness = false # no test harness on-target; all automated tests are host-side (§17.1)
+
+# This empty table is load-bearing: it detaches this crate from any enclosing
+# workspace, which is what keeps `cargo test` at the repo root host-native.
+[workspace]
+
+[profile.release]
+opt-level = "s"
+
+[profile.dev]
+debug = true
+opt-level = "z"
+
+[features]
+default = []
+
+[dependencies]
+harvester-core = { path = "../harvester-core" }
+log = "0.4"
+esp-idf-svc = { version = "0.52.1", features = ["critical-section", "embassy-time-driver"] }
+esp32-nimble = "0.12.0"
+
+[build-dependencies]
+embuild = "0.33"

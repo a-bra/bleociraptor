@@ -1,0 +1,38 @@
+# ABOUTME: ESP-IDF config the spec depends on. Several of these fail SILENTLY
+# ABOUTME: when missing (SPEC.md §13, §21) — treat this file as part of the feature.
+
+# Without this, esp_ota_mark_app_valid_cancel_rollback() is a NO-OP and a bad
+# OTA push bricks the device instead of rolling back (§13, acceptance crit. 5).
+CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
+
+# 4 MB layout, dual OTA slots (§13). Flash size pinned to the C3's even on C6.
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+
+# NimBLE observer only (§4.1): Bluedroid would eat a large fraction of the C3's
+# 400 KB for GATT features this project never uses.
+CONFIG_BT_ENABLED=y
+CONFIG_BT_BLE_ENABLED=y
+CONFIG_BT_BLUEDROID_ENABLED=n
+CONFIG_BT_NIMBLE_ENABLED=y
+CONFIG_BT_NIMBLE_ROLE_CENTRAL=n
+CONFIG_BT_NIMBLE_ROLE_PERIPHERAL=n
+CONFIG_BT_NIMBLE_ROLE_BROADCASTER=n
+CONFIG_BT_NIMBLE_ROLE_OBSERVER=y
+
+# §9's duty-cycle reasoning assumes the Wi-Fi/BLE arbiter is running.
+CONFIG_ESP_COEX_SW_COEXIST_ENABLE=y
+
+# Task watchdog for the housekeeping thread (§15). Panic on the housekeeping
+# thread must reboot, not hang: the TWDT triggers a panic, and panic reboots.
+CONFIG_ESP_TASK_WDT_EN=y
+CONFIG_ESP_TASK_WDT_INIT=y
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=10
+CONFIG_ESP_TASK_WDT_PANIC=y
+
+# Rust std pthreads need more than the IDF default main stack.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8000
+
+# SNTP via esp-idf-svc (§11.3).
+CONFIG_LWIP_SNTP_MAX_SERVERS=2

@@ -13,8 +13,11 @@ if git diff --cached --name-only | grep -qx 'harvester/src/devices.rs'; then
 fi
 # LYWSD03MMC sensors share the Xiaomi OUI A4:C1:38. Fixtures use AA:BB:CC:*
 # synthetic MACs, so this byte pattern appearing anywhere means a real address.
+# Two notations: hex-string (a4:c1:38, a4c138) and Rust byte arrays
+# (0xA4, 0xC1, 0x38) — the second was a real blind spot once.
 # (This file names the OUI and must exempt itself, or it trips on its own comment.)
-if git diff --cached -U0 -- ':(exclude).githooks/pre-commit' | grep -iE '^\+.*a4[:_-]?c1[:_-]?38'; then
+if git diff --cached -U0 -- ':(exclude).githooks/pre-commit' \
+    | grep -iE '^\+.*(a4[:_-]?c1[:_-]?38|0xa4[[:space:]]*,[[:space:]]*0xc1[[:space:]]*,[[:space:]]*0x38)'; then
     fail "staged content matches the Xiaomi OUI A4:C1:38 — that looks like a real sensor MAC."
 fi
 

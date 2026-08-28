@@ -1,0 +1,6 @@
+# ABOUTME: The firmware needs nightly for -Zbuild-std on the tier-3 ESP target.
+# ABOUTME: Scoped to this directory; the repo root builds on stable.
+
+[toolchain]
+channel = "nightly"
+components = ["rust-src"]
