@@ -29,5 +29,28 @@ fn main() {
     println!("cargo:rustc-env=HARVESTER_GIT_SHA={describe}");
     println!("cargo:rerun-if-changed=../.git/HEAD");
 
+    // §18: the dashboard is gzipped at BUILD time and served from flash;
+    // never assemble the page in RAM per request.
+    gzip_dashboard();
+
     embuild::espidf::sysenv::output();
+}
+
+fn gzip_dashboard() {
+    use flate2::{write::GzEncoder, Compression};
+    use std::io::Write as _;
+
+    println!("cargo:rerun-if-changed=assets/index.html");
+    let html = std::fs::read("assets/index.html").expect("assets/index.html is part of the tree");
+    let out = std::path::PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR"))
+        .join("index.html.gz");
+    let mut enc = GzEncoder::new(Vec::new(), Compression::best());
+    enc.write_all(&html).expect("gzip write");
+    let gz = enc.finish().expect("gzip finish");
+    std::fs::write(&out, &gz).expect("write gzipped dashboard");
+    println!(
+        "cargo:warning=dashboard: {} bytes -> {} gzipped",
+        html.len(),
+        gz.len()
+    );
 }

@@ -2,6 +2,7 @@
 // ABOUTME: every body comes from harvester_core::render::* into the socket.
 
 use esp_idf_svc::http::server::{Configuration, EspHttpServer};
+use esp_idf_svc::io::Write as _;
 use esp_idf_svc::http::Method;
 use harvester_core::render::{self, Health};
 use harvester_core::{Clock, Registry};
@@ -146,6 +147,29 @@ pub fn serve(deps: &'static HttpDeps) -> anyhow::Result<EspHttpServer<'static>> 
         let ring = LOGS.lock().map_err(|_| anyhow::anyhow!("poisoned"))?;
         ring.render(&mut w, now, unix)
             .map_err(|_| anyhow::anyhow!("socket write failed"))
+    })?;
+
+    // §18/§12: only the gzipped copy exists and Content-Encoding is always
+    // gzip; curl needs --compressed (README). ETag is the build sha — changes
+    // exactly when the asset can have changed.
+    server.fn_handler("/", Method::Get, |req| {
+        const PAGE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/index.html.gz"));
+        const ETAG: &str = concat!("\"", env!("HARVESTER_GIT_SHA"), "\"");
+        if req.header("If-None-Match") == Some(ETAG) {
+            req.into_response(304, None, &[("ETag", ETAG)])?;
+            return Ok(());
+        }
+        let mut resp = req.into_response(
+            200,
+            None,
+            &[
+                ("Content-Type", "text/html; charset=utf-8"),
+                ("Content-Encoding", "gzip"),
+                ("ETag", ETAG),
+                ("Cache-Control", "no-cache"),
+            ],
+        )?;
+        resp.write_all(PAGE).map_err(anyhow::Error::from)
     })?;
 
     crate::ota::register(&mut server)?;

@@ -38,3 +38,4 @@ embassy-time = { version = "0.5", features = ["generic-queue-8"] }
 
 [build-dependencies]
 embuild = "0.33"
+flate2 = "1"
