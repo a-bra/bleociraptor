@@ -121,7 +121,9 @@ impl DeviceState {
 }
 
 /// The §6.2 `Hot` region: per-device readings, staleness, counters and the
-/// beacons/min rings, plus the crate-global beacon counters.
+/// beacons/min rings, plus the crate-global beacon counters. `Clone` is the
+/// §6.2 rule-3 snapshot: copy ~1 KB under HOT, release, render outside.
+#[derive(Clone)]
 pub struct Registry {
     devices: &'static [Device],
     states: [DeviceState; MAX_DEVICES],

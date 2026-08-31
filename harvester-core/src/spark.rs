@@ -11,6 +11,8 @@ pub const NO_SAMPLE: i16 = i16::MIN;
 
 /// Fixed-capacity ring of sparkline samples, one column per
 /// `SPARK_SAMPLE_INTERVAL`, per device. ~2.3 KB total (§6.2 state budget).
+/// `Clone` is the snapshot: copy under SPARK, release, render outside.
+#[derive(Clone)]
 pub struct Spark {
     temperature: [[i16; SPARK_DEPTH]; MAX_DEVICES],
     humidity: [[i16; SPARK_DEPTH]; MAX_DEVICES],

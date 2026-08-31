@@ -14,3 +14,9 @@ harvester/dependencies.lock
 .vscode/
 .idea/
 *.swp
+
+# Agent worktrees and session state
+.claude/
+
+# Private journal (agent reflections) — never committed
+.private-journal/

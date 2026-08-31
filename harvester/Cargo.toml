@@ -28,6 +28,7 @@ default = []
 
 [dependencies]
 harvester-core = { path = "../harvester-core" }
+anyhow = "1"
 log = "0.4"
 esp-idf-svc = { version = "0.52.1", features = ["critical-section", "embassy-time-driver"] }
 esp32-nimble = "0.12.0"
