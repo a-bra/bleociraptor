@@ -2,5 +2,5 @@
 # ABOUTME: Scoped to this directory; the repo root builds on stable.
 
 [toolchain]
-channel = "nightly"
+channel = "nightly-2026-06-15"
 components = ["rust-src"]

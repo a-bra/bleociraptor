@@ -6,7 +6,9 @@ target = "riscv32imac-esp-espidf" # esp32c6 bring-up board; the C3 is riscv32imc
 
 [target.riscv32imac-esp-espidf]
 linker = "ldproxy"
-runner = "espflash flash --monitor"
+# The dual-OTA partition table (§13) is written at flash time; the IDF build
+# itself never sees it. Paths are relative to this workspace (harvester/).
+runner = "espflash flash --monitor --partition-table partitions.csv"
 rustflags = ["--cfg", "espidf_time64"]
 
 [unstable]

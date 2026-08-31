@@ -5,9 +5,9 @@
 # OTA push bricks the device instead of rolling back (§13, acceptance crit. 5).
 CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
 
-# 4 MB layout, dual OTA slots (§13). Flash size pinned to the C3's even on C6.
-CONFIG_PARTITION_TABLE_CUSTOM=y
-CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+# 4 MB layout (§13). The dual-OTA table itself lives in partitions.csv and is
+# written by espflash at flash time (see .cargo/config.toml runner) — the
+# embuild flow does not feed custom tables through the IDF CMake build.
 CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
 
 # NimBLE observer only (§4.1): Bluedroid would eat a large fraction of the C3's

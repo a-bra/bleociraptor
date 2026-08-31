@@ -31,6 +31,9 @@ harvester-core = { path = "../harvester-core" }
 log = "0.4"
 esp-idf-svc = { version = "0.52.1", features = ["critical-section", "embassy-time-driver"] }
 esp32-nimble = "0.12.0"
+# esp32-nimble uses embassy-time internally; we run plain threads (§6.2), so the
+# timer queue must come from embassy-time's generic queue, not an embassy executor.
+embassy-time = { version = "0.5", features = ["generic-queue-8"] }
 
 [build-dependencies]
 embuild = "0.33"
