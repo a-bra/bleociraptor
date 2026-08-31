@@ -7,6 +7,7 @@ mod devices;
 mod effects;
 mod housekeeping;
 mod http;
+mod ota;
 mod state;
 mod wifi;
 
@@ -16,9 +17,6 @@ use esp_idf_svc::nvs::EspDefaultNvsPartition;
 use esp_idf_svc::sntp::{EspSntp, SyncStatus};
 use harvester_core::Registry;
 use std::sync::atomic::Ordering;
-use std::sync::Mutex;
-
-static OTA_IN_PROGRESS: Mutex<bool> = Mutex::new(false);
 
 fn main() -> anyhow::Result<()> {
     esp_idf_svc::sys::link_patches();
@@ -86,7 +84,7 @@ fn main() -> anyhow::Result<()> {
     let hk = housekeeping::Housekeeping {
         wifi,
         ledger,
-        ota_in_progress: &OTA_IN_PROGRESS,
+        ota_in_progress: &ota::OTA_IN_PROGRESS,
     };
     std::thread::Builder::new()
         .name("sntp-watch".into())

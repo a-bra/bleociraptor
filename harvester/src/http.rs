@@ -148,5 +148,7 @@ pub fn serve(deps: &'static HttpDeps) -> anyhow::Result<EspHttpServer<'static>> 
             .map_err(|_| anyhow::anyhow!("socket write failed"))
     })?;
 
+    crate::ota::register(&mut server)?;
+
     Ok(server)
 }

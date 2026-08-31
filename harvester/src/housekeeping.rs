@@ -27,6 +27,7 @@ pub fn run(mut hk: Housekeeping, twdt: &mut TWDTDriver<'_>) -> ! {
         .watch_current_task()
         .expect("TWDT subscription is the §15 safety net; refuse to run without it");
     let mut wedge = WedgeDetector::new();
+    let mut ota_validated = false;
     let mut last_spark_sample = Millis(0);
     let spark_interval = Millis(config::SPARK_SAMPLE_INTERVAL.as_millis() as u64);
 
@@ -72,6 +73,13 @@ pub fn run(mut hk: Housekeeping, twdt: &mut TWDTDriver<'_>) -> ! {
                 }
             }
         }
+
+        // --- OTA (§13): queued post-upload restart, then validation ---
+        if crate::ota::OTA_RESTART_REQUESTED.swap(false, std::sync::atomic::Ordering::SeqCst) {
+            hk.ledger.restart_with_reason("ota");
+        }
+        let radio_evidence = newest.is_some() || unknown_total > 0;
+        crate::ota::validate_if_due(now.as_secs(), radio_evidence, &mut ota_validated);
 
         // --- wedge verdict (§15.1): core decides, this file reboots ---
         let verdict = wedge.check(
