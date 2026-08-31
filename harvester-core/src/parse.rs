@@ -327,3 +327,73 @@ mod tests {
         );
     }
 }
+
+/// Extract the BTHome (UUID `0xFCD2`) service-data payload from a raw
+/// advertisement. Walks the AD structures (`len || type || data`) and filters
+/// on the UUID explicitly — taking "the first service data entry" is what the
+/// Python implementation did and is only correct by accident (§7). Malformed
+/// lengths bail to `None`; radio bytes are untrusted.
+pub fn fcd2_service_data(adv: &[u8]) -> Option<&[u8]> {
+    const SVC_DATA_UUID16: u8 = 0x16;
+    let mut rest = adv;
+    while let Some((&len, tail)) = rest.split_first() {
+        if len == 0 {
+            return None; // zero-length AD structure: padding or corruption
+        }
+        let (field, next) = tail.split_at_checked(usize::from(len))?;
+        if let Some((&ty, data)) = field.split_first() {
+            if ty == SVC_DATA_UUID16 {
+                if let Some((uuid, payload)) = data.split_at_checked(2) {
+                    if uuid == [0xD2, 0xFC] {
+                        return Some(payload);
+                    }
+                }
+            }
+        }
+        rest = next;
+    }
+    None
+}
+
+#[cfg(test)]
+mod fcd2_tests {
+    use super::fcd2_service_data;
+
+    // A realistic advertisement: flags, then a corpus BTHome service-data field.
+    const ADV: &[u8] = &[
+        0x02, 0x01, 0x06, // flags
+        0x0B, 0x16, 0xD2, 0xFC, 0x40, 0x00, 0x29, 0x01, 0x30, 0x02, 0x3D,
+        0x09, // FCD2 (truncated corpus frame)
+    ];
+
+    #[test]
+    fn finds_fcd2_payload_after_other_fields() {
+        assert_eq!(
+            fcd2_service_data(ADV),
+            Some(&[0x40, 0x00, 0x29, 0x01, 0x30, 0x02, 0x3D, 0x09][..])
+        );
+    }
+
+    #[test]
+    fn filters_on_uuid_not_first_service_data() {
+        // The Python bug (§7): another 0x16 field FIRST must be skipped.
+        let adv = [
+            0x04, 0x16, 0x0F, 0x18, 0x64, // battery service data, not ours
+            0x05, 0x16, 0xD2, 0xFC, 0x40, 0x00, // ours, second
+        ];
+        assert_eq!(fcd2_service_data(&adv), Some(&[0x40, 0x00][..]));
+    }
+
+    #[test]
+    fn bails_on_malformed_lengths() {
+        assert_eq!(fcd2_service_data(&[0x0A, 0x16, 0xD2]), None); // len overruns
+        assert_eq!(fcd2_service_data(&[0x00, 0x16, 0xD2, 0xFC]), None); // zero len
+        assert_eq!(fcd2_service_data(&[]), None);
+        assert_eq!(fcd2_service_data(&[0x01, 0x16]), None); // type only, no uuid
+    }
+
+    #[test]
+    fn ignores_adverts_without_fcd2() {
+        assert_eq!(fcd2_service_data(&[0x02, 0x01, 0x06]), None);
+    }
+}

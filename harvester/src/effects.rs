@@ -41,7 +41,10 @@ impl Clock for EspClock {
         if !TIME_SYNCED.load(Ordering::Relaxed) {
             return None;
         }
-        let mut tv = sys::timeval { tv_sec: 0, tv_usec: 0 };
+        let mut tv = sys::timeval {
+            tv_sec: 0,
+            tv_usec: 0,
+        };
         let ok = unsafe { sys::gettimeofday(&mut tv, std::ptr::null_mut()) } == 0;
         (ok && tv.tv_sec > 0).then(|| u64::try_from(tv.tv_sec).unwrap_or(0))
     }
@@ -63,7 +66,15 @@ pub struct RebootLedger {
 }
 
 const PENDING_KEY: &str = "pending";
-const REASONS: [&str; 7] = ["panic", "wifi", "ble_wedge", "ota", "power", "wdt", "unknown"];
+const REASONS: [&str; 7] = [
+    "panic",
+    "wifi",
+    "ble_wedge",
+    "ota",
+    "power",
+    "wdt",
+    "unknown",
+];
 
 impl RebootLedger {
     pub fn new(partition: EspNvsPartition<NvsDefault>) -> anyhow::Result<Self> {
@@ -110,7 +121,8 @@ impl RebootLedger {
         let count = self.nvs.get_u32(key).ok().flatten().unwrap_or(0) + 1;
         let _ = self.nvs.set_u32(key, count);
 
-        let read = |ledger: &EspNvs<NvsDefault>, k: &str| ledger.get_u32(k).ok().flatten().unwrap_or(0);
+        let read =
+            |ledger: &EspNvs<NvsDefault>, k: &str| ledger.get_u32(k).ok().flatten().unwrap_or(0);
         let counts = RebootCounts {
             panic: read(&self.nvs, "panic"),
             wifi: read(&self.nvs, "wifi"),

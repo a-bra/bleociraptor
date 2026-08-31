@@ -82,7 +82,10 @@ impl Wifi {
             return;
         }
         if now >= self.next_attempt {
-            log::info!("wifi down, reconnecting (next backoff {}s)", self.backoff_secs);
+            log::info!(
+                "wifi down, reconnecting (next backoff {}s)",
+                self.backoff_secs
+            );
             let _ = self.driver.connect();
             self.next_attempt = now.saturating_add(Millis::from_secs(self.backoff_secs));
             self.backoff_secs = (self.backoff_secs * 2).min(BACKOFF_CAP_SECS);

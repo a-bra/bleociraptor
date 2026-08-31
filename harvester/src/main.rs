@@ -1,6 +1,7 @@
 // ABOUTME: Firmware entry point — wiring only (§6.1): construct state, start the
 // ABOUTME: watchdogged sweep FIRST (§6.2 boot order), then Wi-Fi, SNTP, HTTP.
 
+mod ble;
 mod config;
 mod devices;
 mod effects;
@@ -33,15 +34,15 @@ fn main() -> anyhow::Result<()> {
     log::info!(
         "tunables: device_timeout={}s wedge_window={}s spark_interval={}s \
          wifi_giveup={}s ota_validate_after={}s ota_validate_deadline={}s \
-         scan interval={}u window={}u",
+         scan interval={}ms window={}ms",
         config::DEVICE_TIMEOUT.as_secs(),
         config::WEDGE_WINDOW.as_secs(),
         config::SPARK_SAMPLE_INTERVAL.as_secs(),
         config::WIFI_GIVEUP.as_secs(),
         config::OTA_VALIDATE_AFTER.as_secs(),
         config::OTA_VALIDATE_DEADLINE.as_secs(),
-        config::SCAN_INTERVAL_UNITS,
-        config::SCAN_WINDOW_UNITS,
+        config::SCAN_INTERVAL_MS,
+        config::SCAN_WINDOW_MS,
     );
 
     // Anchor: ota.rs is OTA_TOKEN's real consumer (step 13). Never log it.
@@ -77,6 +78,9 @@ fn main() -> anyhow::Result<()> {
         last_reboot_reason: boot_reason,
     }));
     let _server = http::serve(deps)?;
+
+    // BLE last (§6.2 boot order): by now a hang lands on a watchdogged system.
+    ble::spawn()?;
 
     // --- housekeeping thread: owns wifi + ledger, feeds the TWDT (§15) ---
     let hk = housekeeping::Housekeeping {

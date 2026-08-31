@@ -13,7 +13,11 @@ use crate::state::{HOT, LOGS, SPARK};
 
 /// Snapshot of everything /metrics and /api/readings need beyond the registry.
 /// Assembled per request; cheap.
-fn health(wifi_rssi: Option<i8>, reboots: render::RebootCounts, last_reason: &'static str) -> Health {
+fn health(
+    wifi_rssi: Option<i8>,
+    reboots: render::RebootCounts,
+    last_reason: &'static str,
+) -> Health {
     Health {
         uptime_seconds: EspClock.monotonic().as_secs(),
         free_heap_bytes: effects::free_heap_bytes(),
@@ -115,7 +119,10 @@ pub fn serve(deps: &'static HttpDeps) -> anyhow::Result<EspHttpServer<'static>> 
             return Ok(());
         };
         // SPARK is copied (~2.3 KB) so the lock is held for a memcpy, not a render.
-        let spark = SPARK.lock().map(|s| s.clone()).map_err(|_| anyhow::anyhow!("poisoned"))?;
+        let spark = SPARK
+            .lock()
+            .map(|s| s.clone())
+            .map_err(|_| anyhow::anyhow!("poisoned"))?;
         let mut resp = req.into_response(200, None, &[("Content-Type", "application/json")])?;
         let mut w = FmtBridge(&mut resp);
         render::history::render_history(
@@ -130,7 +137,8 @@ pub fn serve(deps: &'static HttpDeps) -> anyhow::Result<EspHttpServer<'static>> 
     server.fn_handler("/logs", Method::Get, |req| {
         let now = EspClock.monotonic();
         let unix = EspClock.unix_seconds();
-        let mut resp = req.into_response(200, None, &[("Content-Type", "text/plain; charset=utf-8")])?;
+        let mut resp =
+            req.into_response(200, None, &[("Content-Type", "text/plain; charset=utf-8")])?;
         let mut w = FmtBridge(&mut resp);
         // §6.2 rule 4: /logs is the exception — it streams UNDER the LOGS lock.
         // Only rare failure-path writes contend; a fetch can delay a log write,

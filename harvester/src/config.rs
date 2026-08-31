@@ -5,8 +5,12 @@ use core::time::Duration;
 
 pub const LISTEN_PORT: u16 = 8183;
 pub const DEVICE_TIMEOUT: Duration = Duration::from_secs(90);
-pub const SCAN_INTERVAL_UNITS: u16 = 64; // x 0.625ms = 40ms  (§9)
-pub const SCAN_WINDOW_UNITS: u16 = 48; // x 0.625ms = 30ms  (§9)
+// §9: 40ms interval / 30ms window = 75% duty. VERIFIED against the pinned
+// esp32-nimble 0.12.0 source: interval()/window() take MILLISECONDS and divide
+// by 0.625 internally — passing the spec's 0.625ms units here would silently
+// mean a 64ms interval. Re-verify on any crate bump.
+pub const SCAN_INTERVAL_MS: u16 = 40;
+pub const SCAN_WINDOW_MS: u16 = 30;
 pub const WEDGE_WINDOW: Duration = Duration::from_secs(600); // §15.1
 pub const WIFI_GIVEUP: Duration = Duration::from_secs(300); // §15
 pub const SPARK_SAMPLE_INTERVAL: Duration = Duration::from_secs(300);
