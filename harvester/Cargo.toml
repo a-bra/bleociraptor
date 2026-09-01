@@ -18,6 +18,8 @@ harness = false # no test harness on-target; all automated tests are host-side (
 
 [profile.release]
 opt-level = "s"
+lto = "fat"
+codegen-units = 1
 
 [profile.dev]
 debug = true
