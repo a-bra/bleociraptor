@@ -1,7 +1,9 @@
 // ABOUTME: The watchdogged 1 Hz sweep (§6.2, §15): staleness, wedge check, spark
 // ABOUTME: sampling, Wi-Fi supervision. Decisions come from core; effects happen here.
 
-use esp_idf_svc::hal::task::watchdog::{config::Config as TwdtConfig, TWDTDriver, TWDT};
+use esp_idf_svc::hal::task::watchdog::{
+    config::Config as TwdtConfig, WatchdogSubscription, TWDTDriver, TWDT,
+};
 use harvester_core::{Clock, Millis, WedgeDetector, WedgeVerdict};
 use std::sync::Mutex;
 use std::time::Duration;
@@ -20,12 +22,10 @@ pub struct Housekeeping {
     pub ota_in_progress: &'static Mutex<bool>,
 }
 
-/// Runs forever on its own thread. Subscribed to the TWDT: if this loop hangs,
-/// the watchdog reboots us (§15) — so it must start BEFORE Wi-Fi/BLE bring-up.
-pub fn run(mut hk: Housekeeping, twdt: &mut TWDTDriver<'_>) -> ! {
-    let mut watch = twdt
-        .watch_current_task()
-        .expect("TWDT subscription is the §15 safety net; refuse to run without it");
+/// Runs forever on the main task. The caller subscribed that task to the TWDT
+/// BEFORE Wi-Fi/BLE bring-up (§6.2 boot order): a blocking hang anywhere in
+/// bring-up must reboot, and idle-task watching alone would not catch it.
+pub fn run(mut hk: Housekeeping, mut watch: WatchdogSubscription<'_>) -> ! {
     let mut wedge = WedgeDetector::new();
     let mut ota_validated = false;
     let mut last_spark_sample = Millis(0);
@@ -34,8 +34,8 @@ pub fn run(mut hk: Housekeeping, twdt: &mut TWDTDriver<'_>) -> ! {
     loop {
         let now = EspClock.monotonic();
 
-        // --- staleness + wedge inputs, one short HOT hold (§6.2 rule 2) ---
-        let (newest, unknown_total) = {
+        // --- staleness + wedge/validation inputs, one short HOT hold (rule 2) ---
+        let (newest, unknown_total, any_ok_beacon) = {
             let mut guard = match HOT.lock() {
                 Ok(g) => g,
                 Err(_) => {
@@ -48,9 +48,12 @@ pub fn run(mut hk: Housekeeping, twdt: &mut TWDTDriver<'_>) -> ! {
             match guard.as_mut() {
                 Some(reg) => {
                     reg.sweep(now);
-                    (reg.newest_last_seen(), reg.unknown_adverts_total())
+                    // Per-boot ok counters: §13's "successfully parsed beacon".
+                    let any_ok =
+                        (0..reg.len()).any(|i| reg.view(i).is_some_and(|v| v.counters.ok > 0));
+                    (reg.newest_last_seen(), reg.unknown_adverts_total(), any_ok)
                 }
-                None => (None, 0),
+                None => (None, 0, false),
             }
         };
 
@@ -65,9 +68,12 @@ pub fn run(mut hk: Housekeeping, twdt: &mut TWDTDriver<'_>) -> ! {
         crate::effects::publish_wifi_rssi(hk.wifi.rssi_dbm());
         let ota_busy = hk.ota_in_progress.lock().map(|g| *g).unwrap_or(false);
         if !ota_busy {
+            // §15: unconditional after 5 min down, INCLUDING a boot that never
+            // associated — wrong-credential builds reboot-loop visibly rather
+            // than sitting dark forever (§13 documents and accepts this).
             if let Some(down) = wifi::down_for(&hk.wifi, now) {
                 let giveup = Millis(config::WIFI_GIVEUP.as_millis() as u64);
-                if hk.wifi.ever_connected && down >= giveup {
+                if down >= giveup {
                     ring_log!(now, "wifi unrecoverable for {}s, rebooting", down.as_secs());
                     hk.ledger.restart_with_reason("wifi");
                 }
@@ -78,7 +84,9 @@ pub fn run(mut hk: Housekeeping, twdt: &mut TWDTDriver<'_>) -> ! {
         if crate::ota::OTA_RESTART_REQUESTED.swap(false, std::sync::atomic::Ordering::SeqCst) {
             hk.ledger.restart_with_reason("ota");
         }
-        let radio_evidence = newest.is_some() || unknown_total > 0;
+        // §13: a successfully parsed beacon OR a stray advert. Failed beacons
+        // deliberately do NOT validate — they feed only the wedge watermark.
+        let radio_evidence = any_ok_beacon || unknown_total > 0;
         crate::ota::validate_if_due(now.as_secs(), radio_evidence, &mut ota_validated);
 
         // --- wedge verdict (§15.1): core decides, this file reboots ---

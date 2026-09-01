@@ -60,8 +60,15 @@ fn main() -> anyhow::Result<()> {
         *hot = Some(Registry::new(devices::DEVICES, config::tunables()));
     }
 
-    // --- watchdog + housekeeping BEFORE anything that can hang (§6.2) ---
+    // --- watchdog BEFORE anything that can hang (§6.2): the main task is
+    // subscribed HERE, so a blocking hang in Wi-Fi/SNTP/HTTP/BLE bring-up
+    // trips the TWDT (panic → reboot → OTA rollback if pending) instead of
+    // stalling forever with a good slot unused. Bring-up must finish inside
+    // the 10 s TWDT budget; it takes ~2 s.
     let mut twdt = housekeeping::watchdog(peripherals.twdt)?;
+    let watch = twdt
+        .watch_current_task()
+        .map_err(|e| anyhow::anyhow!("TWDT subscription is the §15 safety net: {e}"))?;
     let mut wifi = wifi::Wifi::new(peripherals.modem, sysloop.clone(), nvs)?;
     wifi.start()?; // non-blocking: connect() is fired, supervision retries
 
@@ -102,5 +109,5 @@ fn main() -> anyhow::Result<()> {
             std::mem::forget(sntp);
         })?;
 
-    housekeeping::run(hk, &mut twdt)
+    housekeeping::run(hk, watch)
 }

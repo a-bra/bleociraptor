@@ -20,8 +20,6 @@ pub struct Wifi {
     backoff_secs: u64,
     /// Monotonic instant we last had an IP; drives §15's giveup timer.
     pub last_connected: Option<Millis>,
-    /// True once any association+IP has succeeded since boot.
-    pub ever_connected: bool,
 }
 
 impl Wifi {
@@ -48,7 +46,6 @@ impl Wifi {
             next_attempt: Millis(0),
             backoff_secs: 1,
             last_connected: None,
-            ever_connected: false,
         })
     }
 
@@ -77,7 +74,6 @@ impl Wifi {
         let up = self.driver.is_up().unwrap_or(false);
         if up {
             self.last_connected = Some(now);
-            self.ever_connected = true;
             self.backoff_secs = 1;
             return;
         }
