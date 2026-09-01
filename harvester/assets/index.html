@@ -1,3 +1,224 @@
-<!-- ABOUTME: Placeholder until the dashboard lands; replaced by assets authoring. -->
-<!-- ABOUTME: Served gzipped from flash with an ETag. -->
-<html><body>BLEociraptor: dashboard pending</body></html>
+<!doctype html>
+<!-- ABOUTME: Self-contained BLEociraptor dashboard (§18) — readings cards, per-device SVG sparklines, collapsible diagnostics. -->
+<!-- ABOUTME: Polls /api/readings every 15 s and /api/history per its interval_seconds, both gated on tab visibility; null history samples break the polyline. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>BLEociraptor</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+body{background:#1a1a19;color:#dcdcd8;font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:12px;max-width:640px;margin:0 auto}
+h1{font-size:1.1rem;color:#8f8f88;font-weight:600;letter-spacing:.04em;margin:2px 0 12px}
+h1 small{font-weight:400;font-size:.75rem;color:#63635d;float:right;margin-top:.3em}
+#banner{position:sticky;top:0;background:#3d2c14;color:#e8c07a;border:1px solid #5c421e;border-radius:8px;padding:6px 10px;font-size:.85rem;margin-bottom:10px;z-index:1}
+body.dead main{opacity:.45}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.card{background:#242422;border-radius:10px;padding:10px 12px}
+.nm{font-size:.85rem;color:#a8a8a1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tp{font-size:2rem;font-weight:650;letter-spacing:-.02em}
+.tp small,.hu small{font-size:.6em;font-weight:400;color:#8f8f88}
+.hu{font-size:1.05rem;color:#bcbcb6}
+.age{font-size:.78rem;color:#78786f;margin-top:2px}
+.off .age{color:#e66767;font-weight:600}
+.stale{text-decoration:line-through;opacity:.5}
+section{margin-top:20px}
+h2{font-size:.8rem;color:#78786f;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.sd{background:#242422;border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.sr{display:flex;align-items:stretch;gap:8px;margin-top:6px}
+.sr svg{flex:1;height:44px;min-width:0}
+.sr path{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mm{width:4.2em;font-size:.7rem;color:#8f8f88;display:flex;flex-direction:column;justify-content:space-between;text-align:right;flex:none}
+.sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:baseline}
+.ml{font-size:.72rem;color:#8f8f88}
+.xr{display:flex;justify-content:space-between;font-size:.68rem;color:#63635d;margin-top:3px}
+.nodata{font-size:.78rem;color:#63635d;padding:12px 0;text-align:center}
+details{margin-top:20px;background:#242422;border-radius:10px;padding:10px 12px}
+summary{font-size:.8rem;color:#78786f;text-transform:uppercase;letter-spacing:.1em;cursor:pointer}
+dl{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;margin:10px 0;font-size:.85rem}
+dt{color:#8f8f88}
+dd{text-align:right}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{color:#78786f;font-weight:500;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+td,th{padding:3px 0;border-top:1px solid #32322f}
+td+td,th+th{text-align:right}
+</style>
+</head>
+<body>
+<div id="banner" hidden></div>
+<h1>BLEociraptor <small id="sha"></small></h1>
+<main>
+<section><div class="cards" id="cards"><div class="nodata">waiting for first poll…</div></div></section>
+<section><h2>Last <span id="span">6h</span></h2><div id="sparks"></div></section>
+<details><summary>Diagnostics</summary><div id="diag"></div></details>
+</main>
+<script>
+'use strict';
+/*PURE*/
+// seconds -> "4s" / "3m" / "6h" / "1d" (largest unit only; relative ages, §18)
+function fmtDur(s){
+  s=Math.max(0,Math.floor(s));
+  if(s<60)return s+'s';
+  if(s<3600)return Math.floor(s/60)+'m';
+  if(s<86400)return Math.floor(s/3600)+'h';
+  return Math.floor(s/86400)+'d';
+}
+// seconds -> humanized "1d 2h" / "1h 0m" / "5m 3s" for diagnostics uptime
+function fmtUptime(s){
+  s=Math.max(0,Math.floor(s));
+  var d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);
+  if(d)return d+'d '+h+'h';
+  if(h)return h+'h '+m+'m';
+  if(m)return m+'m '+s%60+'s';
+  return s+'s';
+}
+// [min,max] over non-null samples, or null if the series is all-null
+function minMax(v){
+  var mn=null,mx=null;
+  for(var i=0;i<v.length;i++){
+    var x=v[i];
+    if(x==null)continue;
+    if(mn==null||x<mn)mn=x;
+    if(mx==null||x>mx)mx=x;
+  }
+  return mn==null?null:[mn,mx];
+}
+// SVG path for one series. A null sample BREAKS the polyline (§18: gaps, never
+// a line through an outage). Isolated samples become 1px ticks so they render;
+// a tick at the right edge is clamped inside the viewBox so it stays visible.
+function sparkPath(v,w,h,min,max){
+  var pad=2,ih=h-2*pad,span=max-min,step=v.length>1?w/(v.length-1):0,d='',seg=[];
+  function flush(){
+    if(!seg.length)return;
+    d+=seg.length===1
+      ?'M'+Math.min(seg[0][0],w-1)+' '+seg[0][1]+'h1'
+      :'M'+seg.map(function(p){return p[0]+' '+p[1]}).join('L');
+    seg=[];
+  }
+  for(var i=0;i<v.length;i++){
+    var s=v[i];
+    if(s==null){flush();continue;}
+    var t=span?(s-min)/span:.5;
+    seg.push([+(i*step).toFixed(1),+(pad+ih*(1-t)).toFixed(1)]);
+  }
+  flush();
+  return d;
+}
+/*ENDPURE*/
+var $=function(i){return document.getElementById(i)},
+    R=null,Rat=0,          // last /api/readings payload + receipt time (for age ticking)
+    failAt=null,           // first failed fetch since last success
+    histTimer=null,
+    lastKnown={};          // name -> last non-null values seen online, for OFFLINE strike-through
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return'&#'+c.charCodeAt(0)+';'})}
+function vis(){return document.visibilityState==='visible'}
+function val(v,dp,unit,strike){
+  if(v==null)return '—';
+  return '<span'+(strike?' class="stale"':'')+'>'+v.toFixed(dp)+'<small>'+unit+'</small></span>';
+}
+function fail(){if(failAt==null)failAt=Date.now();document.body.classList.add('dead');tick()}
+function ok(){failAt=null;$('banner').hidden=true;document.body.classList.remove('dead')}
+
+function getReadings(){
+  if(!vis())return;
+  fetch('/api/readings').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){
+    R=j;Rat=Date.now();ok();renderCards();renderDiag();
+  }).catch(fail);
+}
+function getHistory(){
+  if(!vis())return;
+  fetch('/api/history').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){
+    ok();renderSparks(j);
+    // cadence comes from the payload, never hard-coded (§12); floored at the
+    // readings cadence so a malformed interval can never hammer the device
+    clearInterval(histTimer);
+    histTimer=setInterval(getHistory,Math.max(15,j.interval_seconds||0)*1000);
+  }).catch(fail);
+}
+
+function renderCards(){
+  var h='';
+  R.devices.forEach(function(d,i){
+    var lk=lastKnown[d.name]||(lastKnown[d.name]={});
+    if(d.online){
+      if(d.temperature!=null)lk.t=d.temperature;
+      if(d.humidity!=null)lk.h=d.humidity;
+    }
+    // offline: last-known values struck through, never a silently stale number
+    var t=d.online?d.temperature:lk.t,hu=d.online?d.humidity:lk.h,off=!d.online;
+    h+='<div class="card'+(off?' off':'')+'"><div class="nm">'+esc(d.name)+(d.encrypted?' 🔒':'')+'</div>'
+      +'<div class="tp">'+val(t,1,'°C',off)+'</div>'
+      +'<div class="hu">'+val(hu,0,'%',off)+'</div>'
+      +'<div class="age" data-i="'+i+'"></div></div>';
+  });
+  $('cards').innerHTML=h;
+  tick();
+}
+// 1 Hz: tick ages up locally between polls, and the unreachable banner
+function tick(){
+  var now=Date.now();
+  if(R){
+    var el=(now-Rat)/1000;
+    document.querySelectorAll('.age').forEach(function(e){
+      var d=R.devices[+e.dataset.i];
+      if(!d)return;
+      e.textContent=d.age_seconds==null?(d.online?'':'never seen')
+        :d.online?fmtDur(d.age_seconds+el)+' ago'
+        :'OFFLINE '+fmtDur(d.age_seconds+el);
+    });
+  }
+  if(failAt!=null){
+    $('banner').textContent='unreachable '+fmtDur((now-failAt)/1000)+' ago';
+    $('banner').hidden=false;
+  }
+}
+
+function renderSparks(hist){
+  $('span').textContent=fmtDur(hist.interval_seconds*hist.depth);
+  var ago=fmtDur(hist.interval_seconds*hist.depth)+' ago',h='';
+  hist.devices.forEach(function(d){
+    h+='<div class="sd"><div class="nm">'+esc(d.name)+'</div>'
+      +spark(d.temperature,'#d95926','°C',1)
+      +spark(d.humidity,'#3987e5','%',0)
+      +'<div class="xr"><span>'+ago+'</span><span>now</span></div></div>';
+  });
+  $('sparks').innerHTML=h||'<div class="nodata">no history yet</div>';
+}
+function spark(vals,color,unit,dp){
+  var mm=minMax(vals);
+  var label='<div class="ml"><span class="sw" style="background:'+color+'"></span>'+unit+'</div>';
+  if(!mm)return label+'<div class="nodata">no samples</div>';
+  return label+'<div class="sr">'
+    +'<svg viewBox="0 0 288 44" preserveAspectRatio="none"><path vector-effect="non-scaling-stroke" stroke="'+color+'" d="'+sparkPath(vals,288,44,mm[0],mm[1])+'"/></svg>'
+    +'<div class="mm"><span>'+mm[1].toFixed(dp)+'</span><span>'+mm[0].toFixed(dp)+'</span></div></div>';
+}
+
+function renderDiag(){
+  var H=R.health;
+  $('sha').textContent=H.version+' '+H.git_sha;
+  var kv=function(k,v){return '<dt>'+k+'</dt><dd>'+v+'</dd>'};
+  var rows=R.devices.map(function(d){
+    return '<tr><td>'+esc(d.name)+'</td><td>'+(d.rssi==null?'—':d.rssi+' dBm')+'</td><td>'+d.beacons_per_minute+'</td></tr>';
+  }).join('');
+  $('diag').innerHTML='<dl>'
+    +kv('uptime',fmtUptime(H.uptime_seconds))
+    +kv('wi-fi RSSI',H.wifi_rssi==null?'—':H.wifi_rssi+' dBm')
+    +kv('heap free / min',Math.round(H.free_heap_bytes/1024)+' / '+Math.round(H.min_free_heap_bytes/1024)+' KB')
+    +kv('reboots',H.reboot_total+' (last: '+esc(H.last_reboot_reason)+')')
+    +kv('unknown adverts',H.unknown_adverts)
+    +kv('firmware',esc(H.version)+' @ '+esc(H.git_sha))
+    +'</dl><table><tr><th>device</th><th>RSSI</th><th>beacons/min</th></tr>'+rows+'</table>';
+}
+
+// §18: a forgotten tab must not hit the device forever — both fetches are gated
+// on visibility; returning to the tab refetches both immediately.
+document.addEventListener('visibilitychange',function(){if(vis()){getReadings();getHistory()}});
+setInterval(getReadings,15000);
+setInterval(tick,1000);
+getReadings();
+getHistory();
+</script>
+</body>
+</html>
