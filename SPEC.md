@@ -919,6 +919,15 @@ partitions.csv
   runs uncommitted code — exactly during rapid iteration, when the check matters
   most. A dirty build reports `abc1234-dirty` and fails the check honestly.
 
+**A USB flash does not touch `otadata`, and `otadata` — not recency — decides
+the boot slot.** `espflash` writes the app to `ota_0` (the first app partition),
+but after any OTA push the active slot may be `ota_1`, and the bootloader will
+keep booting the old image there while the freshly flashed `ota_0` sits unused.
+The symptom is "I flashed new firmware and nothing changed". `scripts/flash.sh`
+therefore erases `otadata` before flashing, which makes the bootloader fall back
+to `ota_0` and the USB flash authoritative; it also clears any pending-verify
+state, which is correct for a physical flash.
+
 **`CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y` is mandatory.** Without it,
 `esp_ota_mark_app_valid_cancel_rollback()` is a silent no-op and rollback never
 happens at all. Everything above still runs, correctly and pointlessly. The
@@ -1206,6 +1215,8 @@ what a wrong one does.
 [ ] freezer sensor: readings survive the metal box, or the timeout gets
     re-derived from its measured rate  (§10.1)
 [ ] OTA push succeeds; build_info reports the new git_sha
+[ ] OTA push, THEN flash.sh over USB → device boots the flashed build
+    (otadata erase — §13's slot-selection gotcha)
 [ ] OTA from a dirty tree → build_info reports -dirty, push_ota.sh fails
 [ ] OTA a deliberately panicking build → auto-rollback to previous slot
 [ ] abort an OTA mid-upload → wedge detector and wifi giveup still armed
